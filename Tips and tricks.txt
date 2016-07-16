@@ -1,0 +1,57 @@
+Tips and tricks.txt
+
+BBS-Era Exploitation for Fun and Anachronism
+REcon 2016
+
+Derek Soeder and Paul Mehta
+Cylance, Inc.
+
+
+
+
+---- windbg.exe
+
+Access Virtual-8086 mode memory (seg:ofs, where linear address = (seg << 4) + ofs):
+db &0040:001E
+dw &@ss:@sp
+
+Access memory as 16-bit:
+u #0207:0000
+
+See "segment support" in windbg help index.
+
+
+To debug RIPterm:
+
+. Install an x86 edition of Windows that allows multiple concurrent
+  users, such as Windows Server 2003 (32-bit)
+. Create a second administrator user
+. Open Control Panel > System (sysdm.cpl)
+  . On the Remote tab, check "Enable Remote Desktop on this computer"
+  . Click "Select Remote Users..." and add the second administrator user
+    . Alternatively, add the second administrator user to the
+      "Remote Desktop Users" group if it exists, or assign the
+      "Allow log on through Terminal Services" right (secpol.msc:
+      Security Settings > Local Policies > User Rights Assignment)
+. Run RIPTERM.EXE in the console session
+. Connect to the system via Remote Desktop
+  . Attach windbg.exe to the ntvdm.exe process running RIPterm
+
+This is helpful because RIPterm runs in full-screen graphical mode, which is difficult to escape when ntvdm.exe breaks in the debugger.
+
+
+
+---- DOSBox debugger
+
+See "How to build and use DOSBox.txt" for information on building, configuring, and using DOSBox.
+
+Quick command cheat sheet for windbg users:
+
+windbg: .hh                -->  DOSBox: HELP
+windbg: dg 200             -->  DOSBox: SELINFO 200
+windbg: db #200:0          -->  DOSBox: D 200:0
+windbg: u #200:0           -->  DOSBox: C 200:0
+windbg: r @eip = 41414141  -->  DOSBox: SR EIP 41414141
+windbg: .writemem "memdump.bin" #200:c0000000 L? 200000
+                           -->  DOSBox: MEMDUMPBIN 200:C0000000 200000
+windbg: g                  --.  DOSBox: (press F5)

@@ -1,0 +1,96 @@
+How to build and use DOSBox.txt
+
+BBS-Era Exploitation for Fun and Anachronism
+REcon 2016
+
+Derek Soeder and Paul Mehta
+Cylance, Inc.
+
+
+
+
+Note: You only need to follow the "Build DOSBox" step if you want to
+use the DOSBox internal debugger.  Otherwise, install the prebuilt
+binaries from https://sourceforge.net/projects/dosbox/ and skip to
+the "Configure DOSBox" step below.
+
+For most research purposes, we recommend using NTVDM rather than
+DOSBox as your virtual DOS environment and windbg.exe for debugging.
+
+
+. Build DOSBox
+  . Download DOSBox: https://sourceforge.net/projects/dosbox/ (dosbox-0.74.tar.gz)
+  . Download SDL Development Libraries: http://www.libsdl.org/download-1.2.php (SDL-devel-1.2.15-VC.zip)
+  . Mostly follow this guide: https://www.dosbox.com/wiki/Building_DOSBox_with_Visual_C_2008_Express
+    . In newer Visual Studio versions: specify SDL include and lib in Project -> Properties:
+      Configuration Properties > VC++ Directories (for both Debug and Release configuration)
+    . With SDL 1.2.15: also append C:\Development\SDL-1.2.15\lib\x86
+  . Enable debugger:
+    . Edit C:\Development\dosbox-0.74\src\platform\visualc\config.h
+      #define C_DEBUG 1
+    . Build pdcurs34 (#define C_DEBUG 1 requires curses.lib)
+      . Download: https://sourceforge.net/projects/pdcurses/files/pdcurses/3.4/
+      . (VS Developer Command Prompt) cd C:\Development\pdcurs34\win32 & nmake vcwin32.mak
+      . Append includes C:\Development\pdcurs34
+      . Append libs C:\Development\pdcurs34\win32
+      . Append dependency pdcurses.lib
+    . Change Alt+Pause as desired (e.g. to Alt+F1)
+      . Edit C:\Development\dosbox-0.74\src\debug\debug.cpp: DEBUG_Init
+      . Edit C:\Development\dosbox-0.74\src\shell\shell.cpp: SHELL_Init
+  . Enable modem:
+    . Ignore "#define C_MODEM 0" in Guide, or edit C:\Development\dosbox-0.74\src\platform\visualc\config.h
+      #define C_MODEM 1
+    . Build sdl_net
+      . Download: http://www.libsdl.org/projects/SDL_net/release-1.2.html (SDL_net-1.2.8.zip)
+      . Open: C:\Development\SDL_net-1.2.8\VisualC\SDL_net_VS2008.sln
+      . Build -> Configuration Manager..., select Release
+      . Project -> Properties: Configuration Properties > VC++ Directories:
+        . To Include Directories, add C:\Development\SDL-1.2.15\include
+        . To Library Directories, add C:\Development\SDL-1.2.15\lib\x86
+    . DOSBox Project -> Properties: Configuration Properties
+      . VC++ Directories
+        . To Include Directories, add C:\Development\SDL_net-1.2.8
+        . To Library Directories, add C:\Development\SDL_net-1.2.8\VisualC\Release
+      . Linker > Input
+        . To Additional Dependencies, add sdl_net.lib
+  . Copy DOSBox.exe, SDL.dll, and SDL_net.dll to a single directory (e.g. C:\DOSBOX)
+
+. Configure DOSBox
+  . Run "dosbox.exe -editconf notepad.exe", exit Notepad
+  . Copy %LOCALAPPDATA%\DOSBox\dosbox-SVN.conf to C:\DOSBOX\11111.conf and C:\DOSBOX\22222.conf
+  . In the [serial] section of C:\DOSBOX\11111.conf:
+    . serial1=modem listenport:11111
+    . serial2=disabled
+  . In the [serial] section of C:\DOSBOX\22222.conf:
+    . serial1=disabled
+    . serial2=modem listenport:22222
+
+. Set up RIPTerm
+  . Extract SHAREWAR.EXE from RIPT2300.ARJ: 7z.exe e -i!SHAREWAR.EXE -oC:\RIPTERM RIPT2300.ARJ
+  . Extract contents of SHAREWAR.EXE to C:\RIPTERM: 7z.exe x -oC:\RIPTERM C:\RIPTERM\SHAREWAR.EXE
+  . C:\DOSBOX\DOSBox.exe -conf C:\DOSBOX\11111.conf
+    . MOUNT C C:\
+    . C:
+    . CD \RIPTERM
+    . RIPTERM.EXE
+      . Standard VGA  (reliable)
+      . COM1, 115200 baud
+      . NO PRINTER
+      . <No Audio Device>
+
+. Set up Wildcat
+  . Download: https://archive.org/details/WILDCATGOLD
+  . Extract WILDCATGOLD.cdr into a temp directory: 7z.exe x -tiso -oC:\WCCD WILDCATGOLD.cdr
+  . C:\DOSBOX\DOSBox.exe -conf C:\DOSBOX\22222.conf
+    . MOUNT C C:\
+    . MOUNT D C:\WCCD
+    . D:
+    . WCINSTAL.EXE
+      . Installation > Install WCGOLDTD (copy to drive C)
+    . C:
+    . CD \WILDCAT
+    . MAKEWILD.EXE
+
+. Connect
+  . In RIPterm: press Alt+M, enter 127.0.0.1:22222
+  . Wait for Wildcat ">> Setting baud via Result Codes. Recd: 001 <<", type 14 in RIPterm, press Enter
